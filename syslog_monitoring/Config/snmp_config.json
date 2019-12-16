@@ -1,0 +1,21 @@
+
+[
+    {
+        "userName":"usm-user",
+        "authKey":"bXlwYXNzd29yZA==",
+        "privKey":"bXlwYXNzd29yZA==",
+        "authProtocol": "SHA",
+        "privProtocol": "AES",
+        "transportTarget": "ipv6_address",
+        "port":162
+    },
+    {
+        "userName": "usm-user",
+        "authKey": "bXlwYXNzd29yZA==",
+        "privKey": "bXlwYXNzd29yZA==",
+        "authProtocol": "SHA",
+        "privProtocol": "AES",
+        "transportTarget": "ipv4_address",
+        "port": 162
+    }
+]

@@ -1,0 +1,7 @@
+APScheduler==3.5.3
+configparser==3.5.0
+pysnmp==4.4.8
+path.py==11.5.0
+future==0.17.1
+futures
+dnspython
