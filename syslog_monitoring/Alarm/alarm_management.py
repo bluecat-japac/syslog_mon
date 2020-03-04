@@ -126,6 +126,8 @@ def set_or_clear_alarm_with_key_source(error_type, case, host, message):
                 return clear_with_source(key, error_type)
             elif error_type.lower() == STORAGEREADONLY.lower():
                 return clear_with_source(key, error_type)
+        elif case.lower() == "forceclear":
+            return "forceclear", key, error_type
         return None, None, None
     except Exception as ex:
         logger.error(

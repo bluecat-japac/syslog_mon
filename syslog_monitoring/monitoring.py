@@ -15,6 +15,7 @@
 from config import *
 from Alarm import alarm_management
 
+basedir = os.path.dirname(os.path.abspath(__file__))
 
 class Monitoring(object):
     def __init__(self):
@@ -34,6 +35,14 @@ class Monitoring(object):
         Should  return  False if opening fails"""
         logger.info("Monitoring:{0}".format("Open"))
         self._is_opened = True
+        forceclear_path = os.path.join(basedir, "forceclear")
+        if os.path.exists(forceclear_path):
+            logger.info("forceclear is existed: {}".format(forceclear_path))
+            with open(forceclear_path) as f:
+                data = f.read()
+                logger.info("forceclear file data : {}".format(data))
+                cond, msg_level, keypair, msg, err_type, host = data.split('|')
+                self._send_trap(cond, msg_level, keypair, msg, err_type, host)
         return True
 
     def close(self):
@@ -60,15 +69,30 @@ class Monitoring(object):
         # Monitor alarm in order to set/clear
         cond, keypair, err_type, host = alarm_management.monitor_alarm(msg["HOST"], msg["FILTER_NAME"], msg["MESSAGE"])
         logger.info("Monitoring set-clear alarm:{0} - {1} - {2}".format(cond, keypair, msg["FILTER_NAME"]))
+
+
         if cond is None or keypair is None or err_type is None:
             return True
-        try:
-            basedir = os.path.dirname(os.path.abspath(__file__))  
-            snmpv3_file_path = os.path.join(basedir, "Snmp", "snmpv3.py")
-            os.system('python "{0}" "{1}" "{2}" "{3}" "{4}" "{5}" "{6}"'.format(snmpv3_file_path, cond, LOG_PRIORITY[msg["LEVEL"]], keypair, msg["MESSAGE"], err_type, host))
-            logger.info("Monitoring send successfully:{0} - {1} - {2}".format(cond, keypair, msg["FILTER_NAME"]))
-        except Exception as ex:
-            logger.error(
-                "Monitoring send failed:{}".format(ex)
-            )    
+        if cond == "forceclear":
+            forceclear = os.path.join(basedir, "forceclear")
+            data = "{0}|{1}|{2}|{3}|{4}|{5}".format(cond, msg["LEVEL"], keypair, msg["MESSAGE"], err_type, host)
+            with open(forceclear, "w+") as forceclear_file:
+                logger.info("Create forceclear file: {}".format(forceclear))
+                forceclear_file.write(data)
+                forceclear_file.seek(0)
+                logger.info("Write data to forceclear file: {}".format(data))
+        else:
+            try:
+                self._send_trap(cond, msg["LEVEL"], keypair, msg["MESSAGE"], err_type, host)
+            except Exception as ex:
+                logger.error(
+                    "Monitoring send failed:{}".format(ex)
+                )
         return True
+
+    def _send_trap(self, cond, msg_level, keypair, msg, err_type, host):
+        logger.info("Send trap: {0}|{1}|{2}|{3}|{4}|{5}".format(cond, msg_level, keypair, msg, err_type, host))
+        snmpv3_file_path = os.path.join(basedir, "Snmp", "snmpv3.py")
+        os.system('python "{0}" "{1}" "{2}" "{3}" "{4}" "{5}" "{6}"'.format(snmpv3_file_path, cond,
+                                                                            LOG_PRIORITY[msg_level], keypair,
+                                                                            msg, err_type, host))

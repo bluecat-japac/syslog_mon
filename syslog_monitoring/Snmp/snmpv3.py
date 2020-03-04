@@ -13,6 +13,8 @@
 # limitations under the License.
 
 import os, sys
+import time
+import re
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 from functools import partial
 from multiprocessing import Pool
@@ -51,44 +53,63 @@ def get_udp_transport_target(transport_target, port):
 
 
 def send_trap(cond, level, keypair, msg, err_type, host, destination):
+    msg = re.sub('\s?\s(?!\s)', '', msg)
+    if cond == "forceclear":
+        is_sent = False
+        for i in range(2):
+            try:
+                send_snmp_trap("clear", level, keypair, msg, err_type, host, destination)
+                logger.info("Monitoring send successfully:{0} - {1} - {2}".format(cond, keypair, msg))
+                is_sent = True
+                break
+            except:
+                logger.error("Waiting for network to resend force clear for STORAGEREADONLY")
+                time.sleep(2)
+        os.remove(os.path.join(basedir, '..', 'forceclear'))
+        if not is_sent:
+            logger.error("Fail to send: {0} - {1} - {2}".format(cond, keypair, msg))
+
+    else:
+        try:
+            send_snmp_trap(cond, level, keypair, msg, err_type, host, destination)
+            logger.info("Monitoring send successfully:{0} - {1} - {2}".format(cond, keypair, msg))
+        except KeyError as key_error:
+            logger.error(
+                "Send_trap:Not found {0}".format(key_error)
+            )
+        except Exception as ex:
+            logger.error("Send_trap: {}".format(ex))
+
+
+
+def send_snmp_trap(cond, level, keypair, msg, err_type, host, destination):
     engine_id = str(get_engine_id())
-    try:
-        errorIndication, errorStatus, errorIndex, varBinds = next(
-            sendNotification(
-                SnmpEngine(OctetString(hexValue=engine_id)),
-                UsmUserData(destination["userName"],
-                            authKey=empty_to_none(decrypt_password(destination['authKey'])),
-                            privKey=empty_to_none(decrypt_password(destination['privKey'])),
-                            authProtocol=AUTH_PROTOCOL[empty_to_none(destination['authProtocol'])],
-                            privProtocol=PRIV_PROTOCOL[empty_to_none(destination['privProtocol'])]),
-                get_udp_transport_target(destination["transportTarget"], destination["port"]),
-                ContextData(),
-                'trap',
-                NotificationType(
-                    ObjectIdentity(MAP_OID[err_type]["OID"])
-                ).addVarBinds(
-                    (MAP_OID[err_type]["bcnSyslogMonAlarmCond"], OctetString(cond)),
-                    (MAP_OID[err_type]["bcnSyslogMonAlarmSeverity"], Integer(level)),
-                    (MAP_OID[err_type]["bcnSyslogMonKeyPair"], OctetString(keypair)),
-                    (MAP_OID[err_type]["bcnSyslogMonHostInfo"], OctetString(host)),
-                    (MAP_OID[err_type]["bcnSyslogMonAlarmMsg"], OctetString(msg))
-                )
+    errorIndication, errorStatus, errorIndex, varBinds = next(
+        sendNotification(
+            SnmpEngine(OctetString(hexValue=engine_id)),
+            UsmUserData(destination["userName"],
+                        authKey=empty_to_none(decrypt_password(destination['authKey'])),
+                        privKey=empty_to_none(decrypt_password(destination['privKey'])),
+                        authProtocol=AUTH_PROTOCOL[empty_to_none(destination['authProtocol'])],
+                        privProtocol=PRIV_PROTOCOL[empty_to_none(destination['privProtocol'])]),
+            get_udp_transport_target(destination["transportTarget"], destination["port"]),
+            ContextData(),
+            'trap',
+            NotificationType(
+                ObjectIdentity(MAP_OID[err_type]["OID"])
+            ).addVarBinds(
+                (MAP_OID[err_type]["bcnSyslogMonAlarmCond"], OctetString(cond)),
+                (MAP_OID[err_type]["bcnSyslogMonAlarmSeverity"], Integer(level)),
+                (MAP_OID[err_type]["bcnSyslogMonKeyPair"], OctetString(keypair)),
+                (MAP_OID[err_type]["bcnSyslogMonHostInfo"], OctetString(host)),
+                (MAP_OID[err_type]["bcnSyslogMonAlarmMsg"], OctetString(msg))
             )
         )
-    except KeyError as key_error:
-        logger.error(
-            "Send_trap:Not found {0}".format(key_error)
-        )
-    except Exception as ex:
-        logger.error(
-            "Send_trap:{0}".format(ex)
-        )
-
+    )
     if errorIndication:
         logger.error(
             "Send_trap:{0}".format(errorIndication)
         )
-
 
 
 if __name__ == '__main__':

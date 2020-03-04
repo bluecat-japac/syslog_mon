@@ -26,14 +26,12 @@ def get_name_servers():
     basedir = os.path.abspath(os.path.join(os.path.dirname(__file__),"../"))
     name_servers = []
     with open("{}/{}".format(basedir, "/Config/resolv.conf"), "r") as rconfig:
-        line = rconfig.readline()
-        while(line):
-            try:
-                ip = re.search(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', line)
+        lines = rconfig.readlines()
+        for line in lines:
+            ip = re.search(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', line)
+            if ip:
                 name_servers.append(ip.group(0))
-                line = rconfig.readline()
-            except:
-                return []
+
     return name_servers
 
 
