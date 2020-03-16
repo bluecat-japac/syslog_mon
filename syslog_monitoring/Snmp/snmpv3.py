@@ -56,7 +56,7 @@ def send_trap(cond, level, keypair, msg, err_type, host, destination):
     msg = re.sub('\s?\s(?!\s)', '', msg)
     if cond == "forceclear":
         is_sent = False
-        for i in range(2):
+        for i in range(5):
             try:
                 send_snmp_trap("clear", level, keypair, msg, err_type, host, destination)
                 logger.info("Monitoring send successfully:{0} - {1} - {2}".format(cond, keypair, msg))
