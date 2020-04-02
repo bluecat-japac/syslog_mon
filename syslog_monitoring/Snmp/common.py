@@ -26,5 +26,5 @@ def get_engine_id():
         else:
             match = re.search(pattern, line)
             if match is not None:
-                engine_id = match.group().split(" 0x")[1]
+                engine_id = match.group().split()[1]
                 return engine_id
