@@ -34,7 +34,6 @@ from Config.map_oid import (
 )
 basedir = os.path.dirname(__file__)
 sys.path.append(basedir)
-from common import get_engine_id
 
 
 def empty_to_none(value):
@@ -116,7 +115,6 @@ def send_trap(cond, level, keypair, msg, err_type, host, destination):
 
 
 def send_snmp_trap(cond, level, keypair, msg, err_type, host, destination):
-    engine_id = str(get_engine_id())
     user = destination["userName"]
     authKey = empty_to_none(decrypt_password(destination['authKey']))
     privKey = empty_to_none(decrypt_password(destination['privKey']))
@@ -129,8 +127,8 @@ def send_snmp_trap(cond, level, keypair, msg, err_type, host, destination):
     v3 = '{} s "{}"'.format(MAP_OID[err_type]["bcnSyslogMonKeyPair"], keypair)
     v4 = '{} s "{}"'.format(MAP_OID[err_type]["bcnSyslogMonHostInfo"], host)
     v5 = '{} s "{}"'.format(MAP_OID[err_type]["bcnSyslogMonAlarmMsg"], msg)
-    cmd = "snmptrap -v 3 -l authPriv -e {} -u {} -a {} -A {} -x {} -X {} {} '' " \
-          "{} {} {} {} {} {}".format(engine_id, user, authProtocol, authKey, privProtocol, privKey, dest, obj, v1, v2, v3, v4, v5)
+    cmd = "snmptrap -v 3 -l authPriv --engineIDType=3 -u {} -a {} -A {} -x {} -X {} {} '' " \
+          "{} {} {} {} {} {}".format(user, authProtocol, authKey, privProtocol, privKey, dest, obj, v1, v2, v3, v4, v5)
     os.system(cmd)
 
 
