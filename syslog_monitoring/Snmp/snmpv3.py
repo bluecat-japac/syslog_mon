@@ -25,7 +25,7 @@ from config import *
 #     PRIV_PROTOCOL
 # )
 
-from snmp_password_process import (
+from Config.snmp_password_process import (
     decrypt_password
 )
 import json
@@ -127,6 +127,7 @@ def send_snmp_trap(cond, level, keypair, msg, err_type, host, destination):
     v3 = '{} s "{}"'.format(MAP_OID[err_type]["bcnSyslogMonKeyPair"], keypair)
     v4 = '{} s "{}"'.format(MAP_OID[err_type]["bcnSyslogMonHostInfo"], host)
     v5 = '{} s "{}"'.format(MAP_OID[err_type]["bcnSyslogMonAlarmMsg"], msg)
+    # psmd always uses engineIDType=3 to send SNMP trap, so we hardcode engineIDType=3 here
     cmd = "snmptrap -v 3 -l authPriv --engineIDType=3 -u {} -a {} -A {} -x {} -X {} {} '' " \
           "{} {} {} {} {} {}".format(user, authProtocol, authKey, privProtocol, privKey, dest, obj, v1, v2, v3, v4, v5)
     os.system(cmd)
@@ -139,7 +140,7 @@ if __name__ == '__main__':
     message = ' '.join(string for string in sys.argv[4])
     err_type = sys.argv[5]
     host = sys.argv[6]
-    pool = Pool(processes=1)
+    pool = Pool(processes=5)
     sendTrapFunc = partial(send_trap, cond, level, keypair, message, err_type, host)
     basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
     with open(basedir + '/Config/snmp_config.json') as f:

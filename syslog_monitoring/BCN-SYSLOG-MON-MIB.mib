@@ -1,0 +1,282 @@
+-- Copyright 2019 BlueCat Networks. All rights reserved.
+-- *****************************************************************
+-- BCN-SYSLOG-MON-MIB.mib:  BlueCat Networks SYSLOG MONITORING service
+--
+--
+-- May 2019, Michael Nonweiler
+--
+-- All rights reserved.
+-- 
+-- *****************************************************************
+
+BCN-SYSLOG-MON-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, NOTIFICATION-TYPE, OBJECT-IDENTITY,
+    DisplayString
+        FROM SNMPv2-TC
+	OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP
+        FROM SNMPv2-CONF
+    BcnAlarmSeverity
+        FROM BCN-TC-MIB
+    bcnContrib
+        FROM BCN-SMI-MIB;
+
+bcnSyslogMon OBJECT IDENTIFIER  ::= { bcnContrib 1 }
+
+bcnSyslogMonMIB MODULE-IDENTITY
+    LAST-UPDATED	"201905080000Z"
+    ORGANIZATION	"BlueCat Networks"
+    CONTACT-INFO
+        "BlueCat Networks. Customer Care.
+
+        North America
+        Call: +1.866.491.2228
+        Europe
+        Call: +44.8081.011.306
+        Other
+        Call: +1.416.646.8433
+        
+        Email: support@bluecatnetworks.com"
+    DESCRIPTION
+        "This module provides the notifications for Syslog Monitoring service"
+    REVISION "201905080000Z"
+    DESCRIPTION
+        "Initial version of this MIB module."
+    ::= { bcnSyslogMon 1 }
+
+-- Organization
+
+bcnSyslogMonNotification OBJECT IDENTIFIER 
+    ::= { bcnSyslogMon 2 }
+
+bcnSyslogMonConformance     OBJECT IDENTIFIER 
+	::= { bcnSyslogMon 3 }
+	
+-- Notification definitions
+
+bcnSyslogMonNotificationEvents OBJECT IDENTIFIER 
+    ::= { bcnSyslogMonNotification 0 }
+
+bcnSyslogMonNotificationData OBJECT IDENTIFIER 
+    ::= { bcnSyslogMonNotification 1 }
+	
+-- Notification data
+
+bcnSyslogMonAlarmCond OBJECT-TYPE
+    SYNTAX          DisplayString
+    MAX-ACCESS      accessible-for-notify
+    STATUS          current
+    DESCRIPTION
+        "Condition (set or clear) for the alarm."
+    ::= { bcnSyslogMonNotificationData 1 }
+	
+bcnSyslogMonAlarmSeverity OBJECT-TYPE
+    SYNTAX          BcnAlarmSeverity
+    MAX-ACCESS      accessible-for-notify
+    STATUS          current
+    DESCRIPTION
+        "Severity classification for the alarm."
+    ::= { bcnSyslogMonNotificationData 2 }
+
+bcnSyslogMonKeyPair OBJECT-TYPE
+    SYNTAX          DisplayString
+    MAX-ACCESS      accessible-for-notify
+    STATUS          current
+    DESCRIPTION
+        "The key pair of the source IP address and target IP address, source IP address and zone name, or source IP address and interface name where the message originates from."
+    ::= { bcnSyslogMonNotificationData 3 }
+
+bcnSyslogMonHostInfo OBJECT-TYPE
+    SYNTAX          DisplayString
+    MAX-ACCESS      accessible-for-notify
+    STATUS          current
+    DESCRIPTION
+        "The name of the server"
+    ::= { bcnSyslogMonNotificationData 4 }
+
+	
+bcnSyslogMonAlarmMsg OBJECT-TYPE
+    SYNTAX          DisplayString
+    MAX-ACCESS      accessible-for-notify
+    STATUS          current
+    DESCRIPTION
+        "Text contents of the log message without the program name and pid."
+    ::= { bcnSyslogMonNotificationData 5 }
+
+
+-- Notification events
+bcnSyslogMonAlarmTestQueryFailed NOTIFICATION-TYPE
+    OBJECTS {                   
+                bcnSyslogMonAlarmCond,
+				bcnSyslogMonAlarmSeverity,
+				bcnSyslogMonKeyPair,
+                bcnSyslogMonHostInfo,
+                bcnSyslogMonAlarmMsg
+                
+            }
+    STATUS          current
+    DESCRIPTION
+        "A bcnSyslogMonAlarmTestQueryFailed signifies that the Syslog Monitoring service has tested DNS query to a monitored 3rd-party DNS server failed and notified
+        a particular event to indicate the alarm is set or cleared."
+   ::= { bcnSyslogMonNotificationEvents 1 }
+
+bcnSyslogMonAlarmLoadConfigurationFailed NOTIFICATION-TYPE
+    OBJECTS {                   
+                bcnSyslogMonAlarmCond,
+				bcnSyslogMonAlarmSeverity,
+				bcnSyslogMonKeyPair,
+                bcnSyslogMonHostInfo,
+                bcnSyslogMonAlarmMsg
+            }
+    STATUS          current
+    DESCRIPTION
+        "A bcnSyslogMonAlarmLoadConfigurationFailed signifies that the Syslog Monitoring service has filtered the error syslog message regarding to loading configuration failed on a BDDS and notified a particular event to indicate the alarm is set or cleared."
+   ::= { bcnSyslogMonNotificationEvents 2 }
+
+bcnSyslogMonAlarmTsigBadTime NOTIFICATION-TYPE
+    OBJECTS {                   
+                bcnSyslogMonAlarmCond,
+				bcnSyslogMonAlarmSeverity,
+				bcnSyslogMonKeyPair,
+                bcnSyslogMonHostInfo,
+                bcnSyslogMonAlarmMsg
+            }
+    STATUS          current
+    DESCRIPTION
+        "A bcnSyslogMonAlarmTsigBadTime signifies that the Syslog Monitoring service has filtered the error syslog message regarding to Tsig bad time on a BDDS and notified a particular event to indicate the alarm is set or cleared."
+   ::= { bcnSyslogMonNotificationEvents 3 }
+   
+bcnSyslogMonAlarmVmStorageReadOnly NOTIFICATION-TYPE
+    OBJECTS {                   
+                bcnSyslogMonAlarmCond,
+				bcnSyslogMonAlarmSeverity,
+				bcnSyslogMonKeyPair,
+                bcnSyslogMonHostInfo,
+                bcnSyslogMonAlarmMsg
+            }
+    STATUS          current
+    DESCRIPTION
+        "A bcnSyslogMonAlarmVmStorageReadOnly signifies that the Syslog Monitoring service has filtered the error syslog message regarding to storage becoming read-only on a BDDS and notified a particular event to indicate the alarm is set or cleared."
+   ::= { bcnSyslogMonNotificationEvents 4 }
+   
+bcnSyslogMonAlarmZoneTransferFailed NOTIFICATION-TYPE
+    OBJECTS {                   
+                bcnSyslogMonAlarmCond,
+				bcnSyslogMonAlarmSeverity,
+				bcnSyslogMonKeyPair,
+                bcnSyslogMonHostInfo,
+                bcnSyslogMonAlarmMsg
+            }
+    STATUS          current
+    DESCRIPTION
+        "A bcnSyslogMonAlarmZoneTransferFailed signifies that the Syslog Monitoring service has filtered the error syslog message regarding to zone transferring failed on a BDDS and notified a particular event to indicate the alarm is set or cleared."
+   ::= { bcnSyslogMonNotificationEvents 5 }
+   
+bcnSyslogMonAlarmTcpConnectionLimitExceeded NOTIFICATION-TYPE
+    OBJECTS {                   
+                bcnSyslogMonAlarmCond,
+				bcnSyslogMonAlarmSeverity,
+				bcnSyslogMonKeyPair,
+                bcnSyslogMonHostInfo,
+                bcnSyslogMonAlarmMsg
+            }
+    STATUS          current
+    DESCRIPTION
+        "A bcnSyslogMonAlarmTcpConnectionLimitExceeded signifies that the Syslog Monitoring service has filtered the error syslog message regarding to TCP connection limit exceeded on a BDDS and notified a particular event to indicate the alarm is set or cleared."
+   ::= { bcnSyslogMonNotificationEvents 6 }
+
+bcnSyslogMonAlarmLoadZoneFailed NOTIFICATION-TYPE
+    OBJECTS {                   
+                bcnSyslogMonAlarmCond,
+				bcnSyslogMonAlarmSeverity,
+				bcnSyslogMonKeyPair,
+                bcnSyslogMonHostInfo,
+                bcnSyslogMonAlarmMsg
+            }
+    STATUS          current
+    DESCRIPTION
+        "A bcnSyslogMonAlarmLoadZoneFailed signifies that the Syslog Monitoring service has filtered the error syslog message regarding to loading zone configuration failed on a BDDS and notified a particular event to indicate the alarm is set or cleared."
+   ::= { bcnSyslogMonNotificationEvents 7 }
+
+bcnSyslogMonNtpClocksUnsynchronized NOTIFICATION-TYPE
+    OBJECTS {                   
+                bcnSyslogMonAlarmCond,
+				bcnSyslogMonAlarmSeverity,
+				bcnSyslogMonKeyPair,
+                bcnSyslogMonHostInfo,
+                bcnSyslogMonAlarmMsg
+            }
+    STATUS          current
+    DESCRIPTION
+        "A bcnSyslogMonNtpClocksUnsynchronized signifies that the Syslog Monitoring service has detected the time gap between a BDDS and its NTP server exceeding the threshold and notified a particular event to indicate the alarm is set or cleared."
+   ::= { bcnSyslogMonNotificationEvents 8 }
+
+bcnSyslogMonAlarmNetworkInterfaceDown NOTIFICATION-TYPE
+    OBJECTS {                   
+                bcnSyslogMonAlarmCond,
+				bcnSyslogMonAlarmSeverity,
+				bcnSyslogMonKeyPair,
+                bcnSyslogMonHostInfo,
+                bcnSyslogMonAlarmMsg
+            }
+    STATUS          current
+    DESCRIPTION
+        "A bcnSyslogMonAlarmNetworkInterfaceDown signifies that the Syslog Monitoring service has filtered the error syslog message regarding to network interface down on a BDDS and notified a particular event to indicate the alarm is set or cleared."
+   ::= { bcnSyslogMonNotificationEvents 9 }
+
+---------------------------------------------------------------------------
+ -- BCN-SYSLOG-MON-MIB Module - Conformance Information
+---------------------------------------------------------------------------
+bcnSyslogMonCompliances OBJECT IDENTIFIER 
+    ::= { bcnSyslogMonConformance 1 }
+
+bcnSyslogMonGroups       OBJECT IDENTIFIER 
+	::= { bcnSyslogMonConformance 2 }
+
+---------------------------------------------------------------------------
+-- Units of conformance
+---------------------------------------------------------------------------
+
+bcnSyslogMonNotificationEventGroup NOTIFICATION-GROUP
+    NOTIFICATIONS { 
+          bcnSyslogMonAlarmTestQueryFailed,
+		  bcnSyslogMonAlarmLoadConfigurationFailed,
+		  bcnSyslogMonAlarmTsigBadTime,
+		  bcnSyslogMonAlarmVmStorageReadOnly,
+		  bcnSyslogMonAlarmZoneTransferFailed,
+		  bcnSyslogMonAlarmTcpConnectionLimitExceeded,
+		  bcnSyslogMonAlarmLoadZoneFailed,
+		  bcnSyslogMonNtpClocksUnsynchronized,
+		  bcnSyslogMonAlarmNetworkInterfaceDown
+    }
+    STATUS current
+    DESCRIPTION "Syslog monitoring notification event group conformance."
+    ::= { bcnSyslogMonGroups 1 }
+
+bcnSyslogMonNotificationDataGroup OBJECT-GROUP
+    OBJECTS { 
+            bcnSyslogMonAlarmCond,
+				bcnSyslogMonAlarmSeverity,
+				bcnSyslogMonKeyPair,
+                bcnSyslogMonHostInfo,
+                bcnSyslogMonAlarmMsg
+    }
+    STATUS current
+    DESCRIPTION "Syslog monitoring notification data conformance."
+    ::= { bcnSyslogMonGroups 2 }
+
+---------------------------------------------------------------------------
+-- MIB Module Compliance statements
+---------------------------------------------------------------------------
+
+bcnSyslogMonCompliance MODULE-COMPLIANCE
+    STATUS current
+    DESCRIPTION "Basic conformance"
+    MODULE -- This module
+    MANDATORY-GROUPS {        
+        bcnSyslogMonNotificationEventGroup, 
+        bcnSyslogMonNotificationDataGroup }
+    ::= {bcnSyslogMonCompliances 1 }
+
+END

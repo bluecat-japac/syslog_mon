@@ -45,3 +45,9 @@ def get_interval_data():
     interval = config.getint("TCP_LIMIT_EXCEED_CONFIG", "INTERVAL")
     return interval
 
+
+def read_file(path):
+    if not os.path.exists(path):
+        return None
+    with open(path) as f:
+        return f.read()

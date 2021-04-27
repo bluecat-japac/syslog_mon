@@ -1,8 +1,51 @@
 # SYSLOG MONITORING
+<p>- Can setup with either using Section 1.1 or 1.2.</p>
 
-## SETUP SYSLOG MONITORING ON BDDS
+## 1.1. SETUP SYSLOG MONITORING DOCKER CONTAINER ON BDDS-9.3
 
-1.  Download the syslog monitoring package from Nexus.
+### Import a docker image
+- Download and copy syslog_mon_arm64.tar.gz for ARM System (syslog_mon_amd64.tar.gz if AMD System) to BDDS server
+- Extract syslog_mon_arm64.tar.gz file  
+- Require to have docker installed in this server
+- Load image from tar file
+  ```
+  docker load -i syslog_monitoring.tar
+  ```
+  
+>Make sure $SYSLOG_MON is set for configuration folder on your host. Include:
+- config.ini
+- map_oid.py
+- resolv.conf
+- snmp_config.json
+- snmp_password_process.py
+
+>To check $SYSLOG_MON is set: <code>echo $SYSLOG_MON</code>
+
+### Run docker container from a docker image named syslog-server
+- Run docker:
+  ```
+  docker run --restart unless-stopped --network=host -d -it --name syslog-sv -v $SYSLOG_MON:/etc/syslog-ng/syslog_monitoring/Config/ syslog_monitoring:<tag> bash
+  ```
+- Note:
+  - To mount logs folder, use the following option, remember to set permission:	
+  ```
+  chmod -R o=rwx <log_directory_path>
+   -v <log_directory_path>:/var/log/mon-app
+  ```
+
+### Configure Syslog Service in BAM 9.3: 
+To forward log to Syslog Monitoring application in the container, please do the below steps:
+
+1. Select **Server** > Choose a server > **Server Service Configuration**
+2. Select **Syslog** Service Type
+3. Add **BDDS IP** and **Port**
+
+![Syslog](images/syslog_service.png?raw=true)
+Note: Get docker container IP address by using command as ```docker inspect <container name or id>```
+
+## 1.2. SETUP SYSLOG MONITORING ON BDDS MANUALLY
+
+1.  Download the syslog monitoring package.
 
 2.  Go to the directory that contains the package and extract it
     > tar -xzvf syslog_mon_in_dds.tar.gz
@@ -43,13 +86,13 @@
 
 7.  Disable firewall for the bdds to be able to send SNMP trap
     > PsmClient node set firewall-enable=0
-      
+
 8.  Restart syslog-ng service
     > service syslog-ng restart
 
-## CONFIGURE SYSLOG SERVICE TO CORRECT THE HOST NAME OF THIS DNS/DHCP SERVER
+## 2. CONFIGURE SYSLOG SERVICE TO CORRECT THE HOST NAME OF THIS DNS/DHCP SERVER
 1.  Get hostname provided in the init script
-2.  Open /usr/share/syslog-ng/include/scl/filter/filters.conf
+2.  Open /usr/share/syslog-ng/include/scl/syslog_mon/filters.conf
 	
 	Add this anywhere
 	```
@@ -111,7 +154,7 @@ The file named config.ini contains the information for configuration, which is l
     | --- | --- | --- |
     | interval | 20 | Interval time (in minutes) before sending clear alarm for tcp connection limit exceed log |
 
-## SNMP CONFIGURATION
+## 3. SNMP CONFIGURATION
 1. The file named snmp_config.json, which is located at syslog_monitoring/Config/, contains the configuration for the trap destinations.
 	In which: \
 	a. For each trap destinations, it is a list of json objects. \
@@ -134,10 +177,11 @@ The file named config.ini contains the information for configuration, which is l
 	The transportTarget field is the IPv4 or IPv6 of the SNMP trap receiver.
 	The port is the one that SNMP trap receiver is listening on.
 
-2. The EngineID can be edited by administrator in /var/lib/net-snmp/snmpd.conf
+2. The EngineID can be edited by administrator in /var/lib/snmp/snmpd.conf
 
 3. The log of syslog monitoring application is at /var/log/mon-app
-## CONFIG OID FOR EACH LOG TYPE
+
+## 3. CONFIG OID FOR EACH LOG TYPE
 1. Open file Snmp/map_oid.py and config OID, bcnSyslogMonAlarmCond, bcnSyslogMonAlarmSeverity, bcnSyslogMonKeyPair, bcnSyslogMonAlarmMsg for each type of log
     
     | Log Type | OID |
@@ -153,7 +197,7 @@ The file named config.ini contains the information for configuration, which is l
     | `NetworkInterfaceDown` | 1.3.6.1.4.1.13315.6.1.2.0.9 |
     Note: "log_type" is defined in syslog-ng.conf. OID is mapped based on `BCN-SYSLOG-MON-MIB.mib`. Follow the format:
 
-    
+
     "log_type":{
         "oid":"oid_value",
         "bcnSyslogMonAlarmCond":"bcnSyslogMonAlarmCond_value",
@@ -162,10 +206,8 @@ The file named config.ini contains the information for configuration, which is l
         "bcnSyslogMonHostInfo":"bcnSyslogMonHostInfo_value", 
         "bcnSyslogMonAlarmMsg":"bcnSyslogMonAlarmMsg_value"
      }
-    
 
 For example:
-
 
      "TestQueryFailed": {
         "OID":"1.3.6.1.4.1.13315.6.1.2.0.1",
@@ -178,17 +220,16 @@ For example:
 
 The fields like bcnSyslogMonAlarmCond, bcnSyslogMonAlarmSeverity, bcnSyslogMonKeyPair, bcnSyslogMonAlarmMsg shall be the same for any trap destinations.
 
-## GENERATE ENCRYPTED PASSWORD
+## 4. GENERATE ENCRYPTED PASSWORD
 1. Run snmp_password_process.py which is located at syslog_monitoring/Config/ to create and encrypt password
 
-	<code>python snmp_password_process.py</code>
+	<code>python3 snmp_password_process.py</code>
 
 2. Input the password
 	
 3. Copy the encrypted password to snmp_config.json
 
-
-## HEALTH CHECK THE 3RD PARTY DNS SERVER 
+## 5. HEALTH CHECK THE 3RD PARTY DNS SERVER 
 1. The list of 3rd party DNS servers can be configured in syslog_monitoring/Config/resolv.conf
 
 2. The interval (in minutes) to send DNS query and the example of DNS query can be configured in syslog_monitoring/Config/config.ini
@@ -196,4 +237,4 @@ The fields like bcnSyslogMonAlarmCond, bcnSyslogMonAlarmSeverity, bcnSyslogMonKe
 ####Note
 * SSH to the VM host, run terminal command `hostname` to get `vmname`.<br/>
 * Then open syslog_monitoring/Config/config.ini, <br/> 
-    in [SCHEDULER_CONFIG] section, replace the `vm_host_name` value: `test.host.name` by the correct string of `vmname` returned above. 
+    in [SCHEDULER_CONFIG] section, replace the `vm_host_name` value: `test.host.name` by the correct string of `vmname` returned above.

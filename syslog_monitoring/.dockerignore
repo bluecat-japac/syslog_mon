@@ -1,0 +1,10 @@
+.git
+env
+Dockerfile
+.gitignore
+README.md
+.dockerignore
+__pycache__
+*.pyc
+*.tar
+*.gz
