@@ -15,8 +15,8 @@
 
 REG_TARGET_STRING_IP = r"(client|master|from).\d+\.\d+\.\d+\.\d+"
 REG_TARGET_IP = r"\d+\.\d+\.\d+\.\d+"
-REG_ZONE_STRING = r"(zone|transfer of ').(\w+\.)+\w+"
-REG_ZONE = r"(\w+\.)+\w+"
+REG_ZONE_STRING = r"(zone|transfer of ').(\w+[\.-]?)+/IN/(\w+[\.-]?)+"
+REG_ZONE = r"(\w+[\.-]?)+/IN/(\w+[\.-]?)+"
 REG_INTERFACE_STRING_DOWN = r"Deleting interface .+ \w+\.*\w+,"
 REG_INTERFACE_STRING_UP = r"Listen normally on \d+ \w+\.*\w+"
 REG_INTERFACE = r"\w+\.*\w+,"

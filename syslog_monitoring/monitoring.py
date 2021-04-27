@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 from config import *
-from Alarm import alarm_management
+from Alarm import alarm_management, common
 
 basedir = os.path.dirname(os.path.abspath(__file__))
+
 
 class Monitoring(object):
     def __init__(self):
@@ -35,19 +37,35 @@ class Monitoring(object):
         Should  return  False if opening fails"""
         logger.info("Monitoring:{0}".format("Open"))
         self._is_opened = True
-        forceclear_path = os.path.join(basedir, "forceclear")
-        if os.path.exists(forceclear_path):
-            logger.info("forceclear is existed: {}".format(forceclear_path))
-            with open(forceclear_path) as f:
-                data = f.read()
-                logger.info("forceclear file data : {}".format(data))
-                cond, msg_level, keypair, msg, err_type, host = data.split('|')
-                self._send_trap(cond, msg_level, keypair, msg, err_type, host)
+
+        state_file = os.path.join(basedir, "current_state")
+        forceclear_file = os.path.join(basedir, "forceclear")
+        state_data = common.read_file(state_file)
+        if state_data:
+            state = json.loads(state_data)
+            logger.info("Load current state from file: {}".format(state))
+            alarm_management.key_pair = state
+            os.remove(state_file)
+
+        forceclear_data = common.read_file(forceclear_file)
+        if forceclear_data:
+            logger.info("forceclear is existed: {}".format(forceclear_file))
+            logger.info("forceclear file data : {}".format(forceclear_data))
+            cond, msg_level, keypair, msg, err_type, host = forceclear_data.split('|')
+            self._send_trap(cond, msg_level, keypair, msg, err_type, host)
+            os.remove(forceclear_file)
+
         return True
 
     def close(self):
         """Close the connection to the target  service"""
         logger.info("Monitoring:{0}".format("Close"))
+        state_file = os.path.join(basedir, "current_state")
+        state = json.dumps(alarm_management.key_pair)
+        with open(state_file, "w+") as f:
+            logger.info("Create state file: {}".format(state_file))
+            logger.info("Save current alarm state to file before restart syslog-ng: {}".format(state))
+            f.write(state)
         self._is_opened = False
 
     def is_opened(self):

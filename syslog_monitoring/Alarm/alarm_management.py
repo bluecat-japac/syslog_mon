@@ -185,14 +185,16 @@ def set_or_clear_alarm_with_key_source_zone(error_type, case, host, message):
     try:
         pattern = REG_ZONE_STRING
         zone_pattern = REG_ZONE
-        value_matched = re.search(pattern, message).group()
-        target = re.search(zone_pattern, value_matched).group()
-        key = "{0}_{1}".format(host, target)
-        if case.lower() == "set":
-            return set_alarm(key, error_type)
-        elif case.lower() == "clear":
-            if error_type.lower() == LOADZONEFAILED.lower():
-                return clear_with_source(key, error_type)
+        value = re.search(pattern, message)
+        if value:
+            value_matched = value.group()
+            target = re.search(zone_pattern, value_matched).group()
+            key = "{0}_{1}".format(host, target)
+            if case.lower() == "set":
+                return set_alarm(key, error_type)
+            elif case.lower() == "clear":
+                if error_type.lower() == LOADZONEFAILED.lower():
+                    return clear_with_source(key, error_type)
         return None, None, None
     except Exception as ex:
         logger.error(
@@ -286,11 +288,10 @@ def clear_zone_transfer(key, error_type, message):
     zone = raw_value[1:]
 
     try:
-        value = key_pair[error_type][key]
-        if value.lower() == zone.lower():
+        value = key_pair[error_type].get(key, None)
+        if value and (value.lower() == zone.lower()):
             return clear_alarm(error_type, key)
-        else:
-            return None, None, None
+        return None, None, None
     except KeyError as key_error:
         logger.error(
             "Alarm_management clear_zone_transfer: {0}".format(key_error)

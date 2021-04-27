@@ -1,0 +1,117 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine. See: https://circleci.com/docs/2.0/configuration-reference
+version: 2.1
+# Use a package of configuration called an orb.
+jobs:
+  build-amd-docker-image:
+    docker:
+      - image: circleci/buildpack-deps:stretch
+    working_directory: ~/repo
+    steps:
+        - checkout
+        - setup_remote_docker
+        - run:
+            name: Build syslog_monitoring:${CIRCLE_TAG} image
+            command: |
+              echo ${PWD}
+              ls -la ~/repo
+              cd ~/repo/syslog_monitoring/
+              docker build -t syslog_monitoring:${CIRCLE_TAG} .
+        - run:
+            name: Export gateway_nfv_scheduler:${CIRCLE_TAG} image
+            command: |
+              export AMD_FOLDER_NAME=${CIRCLE_PROJECT_REPONAME}_amd64
+              mkdir -p ~/repo/${AMD_FOLDER_NAME}
+              cp -rf ~/repo/syslog_monitoring/Config ~/repo/${AMD_FOLDER_NAME}/
+              cd ~/repo/${AMD_FOLDER_NAME}
+              docker save -o syslog_monitoring.tar syslog_monitoring:${CIRCLE_TAG}
+        - run:
+            name: Create a tar.gz file
+            command: |
+              export AMD_FOLDER_NAME=${CIRCLE_PROJECT_REPONAME}_amd64
+              cd ~/repo
+              tar -czvf ${AMD_FOLDER_NAME}.tar.gz ${AMD_FOLDER_NAME}
+        - run:
+            name: Move to release directory
+            command: |
+              mkdir -p ~/release/packages
+              export AMD_FOLDER_NAME=${CIRCLE_PROJECT_REPONAME}_amd64
+              cp -rf ~/repo/${AMD_FOLDER_NAME}.tar.gz ~/release/packages/
+        - persist_to_workspace:
+            root: ~/release
+            paths:
+              - packages
+  build-arm-docker-image:
+    machine:
+      image: ubuntu-2004:202101-01
+      resource_class: arm.medium
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - run:
+          name: Build syslog_monitoring:${CIRCLE_TAG} image
+          command: |
+            echo ${PWD}
+            ls -la ~/repo
+            cd ~/repo/syslog_monitoring/
+            docker build -t syslog_monitoring:${CIRCLE_TAG} .
+      - run:
+          name: Export gateway_nfv_scheduler:${CIRCLE_TAG} image
+          command: |
+            export ARM_FOLDER_NAME=${CIRCLE_PROJECT_REPONAME}_arm64
+            mkdir -p ~/repo/${ARM_FOLDER_NAME}
+            cp -rf ~/repo/syslog_monitoring/Config ~/repo/${ARM_FOLDER_NAME}/
+            cd ~/repo/${ARM_FOLDER_NAME}
+            docker save -o syslog_monitoring.tar syslog_monitoring:${CIRCLE_TAG}
+      - run:
+          name: Create a tar.gz file
+          command: |
+            export ARM_FOLDER_NAME=${CIRCLE_PROJECT_REPONAME}_arm64
+            cd ~/repo
+            tar -czvf ${ARM_FOLDER_NAME}.tar.gz ${ARM_FOLDER_NAME}
+      - run:
+          name: Move to release directory
+          command: |
+            mkdir -p ~/release/packages
+            export ARM_FOLDER_NAME=${CIRCLE_PROJECT_REPONAME}_arm64
+            cp -rf ~/repo/${ARM_FOLDER_NAME}.tar.gz ~/release/packages/
+      - persist_to_workspace:
+          root: ~/release
+          paths:
+            - packages
+  release:
+    docker:
+    - image: cibuilds/github:0.13
+    steps:
+      - attach_workspace:
+          at: ~/release
+      - run:
+          name: Publish Release on GitHub
+          command: |
+            echo "Release ${CIRCLE_PROJECT_REPONAME}:${CIRCLE_TAG}"
+            ls -la ~/release/packages/
+            ghr -debug -t ${ACCESS_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} ~/release/packages/
+workflows:
+  version: 2
+  build-and-release:
+    jobs:
+      - build-amd-docker-image:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - build-arm-docker-image:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - release:
+          requires:
+            - build-amd-docker-image
+            - build-arm-docker-image
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
