@@ -1,0 +1,19 @@
+[Unit]
+Description=Run the Syslog Monitoring container after Docker service enable
+After=docker.service
+Requires=docker.service
+
+[Service]
+type=simple
+Environment=IMAGE_NAME='syslog_monitoring:<TAG_RELEASE>'               \
+            NAME='syslog-sv'
+ExecStartPre=-/usr/bin/docker stop   $NAME      2> /dev/null || true
+ExecStartPre=-/usr/bin/docker rm     $NAME      2> /dev/null || true
+ExecStart=/usr/bin/docker run -d -it --restart unless-stopped       \
+                              --network=host                        \
+                              --name $NAME                          \
+                              -v  /var/log/syslog_monitoring/:/var/log/mon-app  \
+                              -v /opt/syslog_monitoring/Config/:/etc/syslog-ng/syslog_monitoring/Config/ \
+                              $IMAGE_NAME
+[Install]
+WantedBy=multi-user.target
