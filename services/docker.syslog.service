@@ -9,7 +9,7 @@ Environment=IMAGE_NAME='syslog_monitoring:<TAG_RELEASE>'               \
             NAME='syslog-sv'
 ExecStartPre=-/usr/bin/docker stop   $NAME      2> /dev/null || true
 ExecStartPre=-/usr/bin/docker rm     $NAME      2> /dev/null || true
-ExecStart=/usr/bin/docker run -d -it --restart unless-stopped       \
+ExecStart=/usr/bin/docker run --rm                                 \
                               --network=host                        \
                               --name $NAME                          \
                               -v  /var/log/syslog_monitoring/:/var/log/mon-app  \
