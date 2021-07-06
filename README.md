@@ -223,7 +223,7 @@ The fields like bcnSyslogMonAlarmCond, bcnSyslogMonAlarmSeverity, bcnSyslogMonKe
 ## 4. GENERATE ENCRYPTED PASSWORD
 1. Run snmp_password_process.py which is located at syslog_monitoring/Config/ to create and encrypt password
 
-	<code>python3 snmp_password_process.py</code>
+	<code>python2 snmp_password_process.py</code>
 
 2. Input the password
 	
