@@ -25,9 +25,9 @@ def decrypt_password(encoded):
 
 if __name__ == '__main__':
     while True:
-        password = input("Let's type a new password:")
+        password = raw_input("Let's type a new password:")
         if password.strip() is not "":
             break
-    pwd_encrypt = encrypt_password(str(password.strip()).encode())
-    print("{} {}".format("Your password is encrypted as:", pwd_encrypt.decode('utf-8')))
-    print("Please update your encrypted password in snmp_config.json file\n")
+    pwd_encrypt = encrypt_password(password.strip())
+    print "{0} {1}".format("Your password is encrypted as:", pwd_encrypt)
+    print "Please update your encrypted password in snmp_config.json file\n"
