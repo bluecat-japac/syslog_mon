@@ -13,8 +13,7 @@ RUN mkdir /var/log/mon-app /var/log/mon-app/fw-log /var/log/mon-app/filter-log &
 COPY . /etc/syslog-ng/syslog_monitoring
 COPY filters.conf /usr/share/syslog-ng/include/scl/syslog_mon/
 
-RUN \
-    pip install wheel && \
+RUN pip install wheel && \
     pip install -r /etc/syslog-ng/syslog_monitoring/requirements.txt && \
     apt-get install -y tzdata && \
     dpkg-reconfigure tzdata && \
