@@ -12,6 +12,20 @@
   docker load -i syslog_monitoring.tar
   ```
   
+  or pull image from Registry:
+
+    ```
+    docker login registry.bluecatlabs.net/
+    docker pull <image-registry-name>:<tag>
+    ```
+    
+    > Example: docker pull registry.bluecatlabs.net/professional-services/japac-tma/syslog_mon_in_dds:syslog-mon-master
+
+    Or copy the <syslog-mon-image>.tar.gz file to the host machine and run cmd:
+    
+    ```
+    docker load -i <syslog-mon-image>.tar.gz
+  
 >Make sure $SYSLOG_MON is set for configuration folder on your host. Include:
 - config.ini
 - map_oid.py
@@ -22,23 +36,36 @@
 >To check $SYSLOG_MON is set: <code>echo $SYSLOG_MON</code>
 
 ### Run docker container from a docker image named syslog-server
+#### By docker cmd
 - Run docker:
   ```
-  docker run --restart unless-stopped --network=host -d -it --name syslog-sv -v $SYSLOG_MON:/etc/syslog-ng/syslog_monitoring/Config/ syslog_monitoring:<tag> bash
+  docker run --rm --network=host --name syslog-sv -v $SYSLOG_MON:/etc/syslog-ng/syslog_monitoring/Config/ syslog_monitoring:<tag>
   ```
-- Note:
+#### By Service
+- Setup docker image name in Syslog Service file then copy it to systemd
+    ```bash
+    cp <extracted-dir>/services/docker.syslog.service /lib/systemd/system/
+    ```
+- Run Syslog Service
+   ```bash
+	systemctl start docker.syslog
+   ```
+    
+> Note:
   - To mount logs folder, use the following option, remember to set permission:	
   ```
   chmod -R o=rwx <log_directory_path>
    -v <log_directory_path>:/var/log/mon-app
   ```
-
+ 
+  
 ### Configure Syslog Service in BAM 9.3: 
 To forward log to Syslog Monitoring application in the container, please do the below steps:
 
 1. Select **Server** > Choose a server > **Server Service Configuration**
 2. Select **Syslog** Service Type
 3. Add **BDDS IP** and **Port**
+
 
 ![Syslog](images/syslog_service.png?raw=true)
 Note: Get docker container IP address by using command as ```docker inspect <container name or id>```
@@ -153,6 +180,32 @@ The file named config.ini contains the information for configuration, which is l
     | Keys | Value | Description |
     | --- | --- | --- |
     | interval | 20 | Interval time (in minutes) before sending clear alarm for tcp connection limit exceed log |
+
+4. The LOGGER_CONFIG configuration for monitor.log:
+
+    | Keys | Value | Description |
+    | --- | --- | --- |
+    | maxbytes | 10000000(bytes) | The number of file size |
+    | backupcount | 5 | The number of copies log files |
+    | log_level | WARNING | The log text level (ex: ERROR, INFO, WARNING..) |
+
+## CONFIGURE FILTER & FORWARD LOG ROTATION
+
+Support configure `MAX FILE SIZE` and `BACKUP COUNT` in `<extracted-dir>/syslog-monitoring/syslog-mon`
+1. if change value of run docker container, copy this file to:
+    ```bash
+    docker cp <extracted-dir>/syslog-monitoring/syslog-mon /etc/logrotate.d/syslog-mon
+    ```
+    > Note: remember restart docker container or service after change syslog-mon
+    
+2. Description
+
+    | Keys  | Description | Default |
+    | --- | --- | --- |
+    | `maxsize` | The number of file size | 10M (10 Megabytes)|
+    | `rotate`  | The number of copies log files | 5 |
+    
+    
 
 ## 3. SNMP CONFIGURATION
 1. The file named snmp_config.json, which is located at syslog_monitoring/Config/, contains the configuration for the trap destinations.
