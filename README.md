@@ -5,33 +5,29 @@
 
 ### Import a docker image
 - Download and copy syslog_mon_arm64.tar.gz for ARM System (syslog_mon_amd64.tar.gz if AMD System) to BDDS server
-- Extract syslog_mon_arm64.tar.gz file  
+- Extract syslog_mon_<arch>.tar.gz file  
 - Require to have docker installed in this server
 - Load image from tar file
   ```
   docker load -i syslog_monitoring.tar
   ```
   
-  or pull image from Registry:
+  or pull the docker image from Registry:
 
     ```
     docker login registry.bluecatlabs.net/
     docker pull <image-registry-name>:<tag>
-    ```
     
-    > Example: docker pull registry.bluecatlabs.net/professional-services/japac-tma/syslog_mon_in_dds:syslog-mon-master
+        > Example: docker pull registry.bluecatlabs.net/professional-services/japac-tma/syslog_mon_in_dds:syslog-mon-master
 
-    Or copy the <syslog-mon-image>.tar.gz file to the host machine and run cmd:
-    
     ```
-    docker load -i <syslog-mon-image>.tar.gz
-  
+    
 >Make sure $SYSLOG_MON is set for configuration folder on your host. Include:
-- config.ini
-- map_oid.py
-- resolv.conf
-- snmp_config.json
-- snmp_password_process.py
+>- config.ini
+>- map_oid.py
+>- resolv.conf
+>- snmp_config.json
+>- snmp_password_process.py
 
 >To check $SYSLOG_MON is set: <code>echo $SYSLOG_MON</code>
 
@@ -39,16 +35,22 @@
 #### By docker cmd
 - Run docker:
   ```
-  docker run --rm --network=host --name syslog-sv -v $SYSLOG_MON:/etc/syslog-ng/syslog_monitoring/Config/ syslog_monitoring:<tag>
+  docker run --restart unless-stopped -d  \
+             --name syslog-sv             \
+             --network=host               \
+             -v $SYSLOG_MON:/etc/syslog-ng/syslog_monitoring/Config/ \
+             -v /var/lib/snmp/:/var/lib/snmp/                                \
+             <syslog-monitoring-image>:<tag>
   ```
 #### By Service
-- Setup docker image name in Syslog Service file then copy it to systemd
+- Setup docker image name in Syslog Service file then copy it into systemd
     ```bash
     cp <extracted-dir>/services/docker.syslog.service /lib/systemd/system/
     ```
+    
 - Run Syslog Service
    ```bash
-	systemctl start docker.syslog
+    systemctl start docker.syslog
    ```
     
 > Note:

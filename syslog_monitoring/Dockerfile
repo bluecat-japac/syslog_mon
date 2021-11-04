@@ -27,4 +27,4 @@ RUN pip install wheel && \
     dpkg-reconfigure tzdata && \
     apt-get install ntp -y
 
-CMD  ./start.sh; syslog-ng --process-mode=foreground --no-caps
+CMD  ["./start.sh"]

@@ -8,3 +8,7 @@ then
 else
    service cron start
 fi
+
+echo "Run syslog-ng in foreground ..."
+
+syslog-ng --process-mode=foreground --no-caps
