@@ -13,10 +13,18 @@ RUN mkdir /var/log/mon-app /var/log/mon-app/fw-log /var/log/mon-app/filter-log &
 COPY . /etc/syslog-ng/syslog_monitoring
 COPY filters.conf /usr/share/syslog-ng/include/scl/syslog_mon/
 
+COPY syslog-mon   /etc/logrotate.d/syslog-mon
+COPY start.sh     .
+
+RUN chmod +x start.sh
+
+RUN chmod -R 644 /etc/logrotate.d/syslog-mon
+RUN echo "* * * * *  root  logrotate -v /etc/logrotate.d/syslog-mon" >> /etc/crontab
+
 RUN pip install wheel && \
     pip install -r /etc/syslog-ng/syslog_monitoring/requirements.txt && \
     apt-get install -y tzdata && \
     dpkg-reconfigure tzdata && \
     apt-get install ntp -y
 
-CMD ["syslog-ng", "--process-mode=foreground"]
+CMD  ["./start.sh"]

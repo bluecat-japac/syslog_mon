@@ -1,0 +1,10 @@
+/var/log/mon-app/filter-log/*/*.log
+{
+   compress
+   copytruncate
+   missingok
+   notifempty
+   rotate 5
+   maxsize 10M
+   daily
+}

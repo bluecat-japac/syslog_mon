@@ -13,9 +13,11 @@
 # limitations under the License.
 
 import logging
-from logging.handlers import TimedRotatingFileHandler
+from logging.handlers import RotatingFileHandler
 import os
 import sys
+import configparser
+import gzip
 
 ###
 # Log config
@@ -34,13 +36,76 @@ LOG_PRIORITY = {
     'debug':10
 }
 
+
+class NewRotatingFileHandler(RotatingFileHandler):
+    def __init__(self, filename, **kws):
+        backupCount = kws.get('backupCount', 0)
+        self.backup_count = backupCount
+        RotatingFileHandler.__init__(self, filename, **kws)
+
+    def doArchive(self, old_log):
+        with open(old_log) as log:
+            with gzip.open(old_log + '.gz', 'wb') as comp_log:
+                comp_log.writelines(log)
+        os.remove(old_log)
+
+    def doRollover(self):
+        if self.stream:
+            self.stream.close()
+            self.stream = None
+        if self.backup_count > 0:
+            for i in range(self.backup_count - 1, 0, -1):
+                sfn = "%s.%d.gz" % (self.baseFilename, i)
+                dfn = "%s.%d.gz" % (self.baseFilename, i + 1)
+                if os.path.exists(sfn):
+                    if os.path.exists(dfn):
+                        os.remove(dfn)
+                    os.rename(sfn, dfn)
+            dfn = self.baseFilename + ".1"
+            if os.path.exists(dfn):
+                os.remove(dfn)
+            if os.path.exists(self.baseFilename):
+                os.rename(self.baseFilename, dfn)
+                self.doArchive(dfn)
+        if not self.delay:
+            self.stream = self._open()
+
+
+def map_text_log_level(logging_text):
+    """
+    :param logging_text: content of log
+    :return:
+    [dict_log] - String
+    """
+    dict_log = dict(
+        CRITICAL=50,
+        FATAL=50,
+        ERROR=40,
+        WARNING=30,
+        WARN=30,
+        INFO=20,
+        DEBUG=10,
+        NOTSET=0
+    )
+    return dict_log[logging_text]
+
+
 # Configure log app monitoring
-logging.basicConfig(
-    level=logging.INFO,
-)
+default_maxbytes = 10000000
+default_backupcount = 5
+default_log_level = "WARNING"
+basedir = os.path.dirname(os.path.abspath(__file__))
+config_file = os.path.join(basedir, "Config", "config.ini")
+config = configparser.ConfigParser()
+config.read(config_file)
+maxbytes = config.getint("LOGGER_CONFIG", "MAXBYTES") if config is not None and config.has_option("LOGGER_CONFIG", "MAXBYTES") else default_maxbytes
+backupcount = config.getint("LOGGER_CONFIG", "BACKUPCOUNT") if config is not None and config.has_option("LOGGER_CONFIG", "BACKUPCOUNT") else default_backupcount
+log_level = config.get("LOGGER_CONFIG", "LOG_LEVEL") if config is not None and config.has_option("LOGGER_CONFIG", "LOG_LEVEL") else default_log_level
+log_level = map_text_log_level(log_level)
+
 logger = logging.getLogger("monitoring")
-handler = TimedRotatingFileHandler(LOG_PATH + "/" + LOG_NAME, when="midnight", interval=1)
-handler.suffix = "%Y%m%d"
-log_formater = logging.Formatter("%(asctime)s:%(levelname)s:%(message)s")
-handler.setFormatter(log_formater)
+logger.setLevel(level=log_level)
+handler = NewRotatingFileHandler(LOG_PATH + "/" + LOG_NAME, maxBytes=maxbytes, backupCount=backupcount)
+log_formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(message)s")
+handler.setFormatter(log_formatter)
 logger.addHandler(handler)
