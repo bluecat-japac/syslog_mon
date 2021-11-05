@@ -38,6 +38,7 @@
   docker run --restart unless-stopped -d  \
              --name syslog-sv             \
              --network=host               \
+             --log-driver=none            \
              -v $SYSLOG_MON:/etc/syslog-ng/syslog_monitoring/Config/ \
              -v /var/lib/snmp/:/var/lib/snmp/                                \
              <syslog-monitoring-image>:<tag>
