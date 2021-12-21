@@ -27,4 +27,20 @@ RUN pip install wheel && \
     dpkg-reconfigure tzdata && \
     apt-get install ntp -y
 
+# Remove "cpp" and "mirror" in containers
+RUN apt-get update && apt-get install -y \
+  bzr \
+  cvs \
+  git \
+  mercurial \
+  subversion \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /usr/lib/apt/methods/mirror \
+  && rm -rf /etc/alternatives/cpp \
+            /usr/bin/cpp \
+            /usr/lib/cpp  \
+            /lib/cpp \
+            /usr/share/doc/cpp \
+            /var/lib/dpkg/alternatives/cpp
+
 CMD  ["./start.sh"]
