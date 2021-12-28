@@ -120,17 +120,13 @@ workflows:
             tags:
               only:  /^v.*/
             branches:
-              only:
-                - master
-              # ignore: /.*/
+              ignore: /.*/
       - build-arm-docker-image:
           filters:
             tags:
               only:  /^v.*/
             branches:
-              only:
-                - master
-              # ignore: /.*/
+              ignore: /.*/
       - release:
           requires:
             - build-amd-docker-image
