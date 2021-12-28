@@ -3,7 +3,7 @@
 ARG IMAGE=syslog_monitoring:<tag>
 FROM $IMAGE
 RUN   ln -s / /rootlink && \
-      rm -f /usr/lib/apt/methods/mirror* \
+      rm -rf /usr/lib/apt/methods/mirror* \
             /etc/alternatives/cpp \
             /usr/bin/cpp \
             /usr/lib/cpp  \
@@ -12,6 +12,6 @@ RUN   ln -s / /rootlink && \
             /var/lib/dpkg/alternatives/cpp
 FROM scratch
 COPY --from=0 /rootlink/ /
-RUN rm -f /rootlink
+RUN rm -rf /rootlink
 ENV PYTHONPATH /etc/syslog-ng/syslog_monitoring
 CMD  ["./start.sh"]
