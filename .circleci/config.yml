@@ -17,6 +17,16 @@ jobs:
               cd ~/repo/syslog_monitoring/
               docker build -t syslog_monitoring:${CIRCLE_TAG} .
         - run:
+            name: support build cleaned images
+            command: |
+              cd ~/repo/syslog_monitoring/
+              sed -i -e 's/<tag>/${CIRCLE_TAG}/g' cleaned.Dockerfile
+              docker images
+              docker build --build-arg IMAGE=syslog_monitoring:${CIRCLE_TAG} --tag=cleaned_syslog_monitoring:${CIRCLE_TAG} -f cleaned.Dockerfile .
+              docker images
+              docker tag cleaned_syslog_monitoring:${CIRCLE_TAG} syslog_monitoring:${CIRCLE_TAG}
+              docker images
+        - run:
             name: Export gateway_nfv_scheduler:${CIRCLE_TAG} image
             command: |
               export AMD_FOLDER_NAME=${CIRCLE_PROJECT_REPONAME}_amd64
@@ -56,6 +66,13 @@ jobs:
             ls -la ~/repo
             cd ~/repo/syslog_monitoring/
             docker build -t syslog_monitoring:${CIRCLE_TAG} .
+      - run:
+            name: support build cleaned images
+            command: |
+              cd ~/repo/syslog_monitoring/
+              sed -i -e 's/<tag>/${CIRCLE_TAG}/g' cleaned.Dockerfile
+              docker build --build-arg IMAGE=syslog_monitoring:${CIRCLE_TAG} --tag=cleaned_syslog_monitoring:${CIRCLE_TAG} -f cleaned.Dockerfile .
+              docker tag cleaned_syslog_monitoring:${CIRCLE_TAG} syslog_monitoring:${CIRCLE_TAG}
       - run:
           name: Export gateway_nfv_scheduler:${CIRCLE_TAG} image
           command: |
@@ -101,13 +118,17 @@ workflows:
       - build-amd-docker-image:
           filters:
             tags:
-              only: /^v.*/
+              only: 
+                - /^v.*/
+                - /master.*/
             branches:
               ignore: /.*/
       - build-arm-docker-image:
           filters:
             tags:
-              only: /^v.*/
+              only: 
+                - /^v.*/
+                - /master.*/
             branches:
               ignore: /.*/
       - release:
@@ -116,6 +137,8 @@ workflows:
             - build-arm-docker-image
           filters:
             tags:
-              only: /^v.*/
+              only: 
+                - /^v.*/
+                - /master.*/
             branches:
               ignore: /.*/
