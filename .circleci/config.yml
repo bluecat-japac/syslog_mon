@@ -120,7 +120,7 @@ workflows:
             tags:
               only: 
                 - /^v.*/
-                - /master.*/
+                - master
             branches:
               ignore: /.*/
       - build-arm-docker-image:
@@ -128,7 +128,7 @@ workflows:
             tags:
               only: 
                 - /^v.*/
-                - /master.*/
+                - master
             branches:
               ignore: /.*/
       - release:
