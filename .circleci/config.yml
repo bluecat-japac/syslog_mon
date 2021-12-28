@@ -118,27 +118,25 @@ workflows:
       - build-amd-docker-image:
           filters:
             tags:
-              only: 
-                - /^v.*/
-                - master
+              only:  /^v.*/
             branches:
-              ignore: /.*/
+              only:
+                - master
+              # ignore: /.*/
       - build-arm-docker-image:
           filters:
             tags:
-              only: 
-                - /^v.*/
-                - master
+              only:  /^v.*/
             branches:
-              ignore: /.*/
+              only:
+                - master
+              # ignore: /.*/
       - release:
           requires:
             - build-amd-docker-image
             - build-arm-docker-image
           filters:
             tags:
-              only: 
-                - /^v.*/
-                - /master.*/
+              only: /^v.*/
             branches:
               ignore: /.*/
