@@ -17,7 +17,14 @@ jobs:
               cd ~/repo/syslog_monitoring/
               docker build -t syslog_monitoring:${CIRCLE_TAG} .
         - run:
-            name: Export gateway_nfv_scheduler:${CIRCLE_TAG} image
+            name: Support build cleaned images
+            command: |
+              cd ~/repo/syslog_monitoring/
+              sed -i -e 's/<tag>/${CIRCLE_TAG}/g' cleaned.Dockerfile
+              docker build --build-arg IMAGE=syslog_monitoring:${CIRCLE_TAG} --tag=cleaned_syslog_monitoring:${CIRCLE_TAG} -f cleaned.Dockerfile .
+              docker tag cleaned_syslog_monitoring:${CIRCLE_TAG} syslog_monitoring:${CIRCLE_TAG}
+        - run:
+            name: Export syslog_monitoring:${CIRCLE_TAG} image
             command: |
               export AMD_FOLDER_NAME=${CIRCLE_PROJECT_REPONAME}_amd64
               mkdir -p ~/repo/${AMD_FOLDER_NAME}
@@ -56,6 +63,13 @@ jobs:
             ls -la ~/repo
             cd ~/repo/syslog_monitoring/
             docker build -t syslog_monitoring:${CIRCLE_TAG} .
+      - run:
+            name: support build cleaned images
+            command: |
+              cd ~/repo/syslog_monitoring/
+              sed -i -e 's/<tag>/${CIRCLE_TAG}/g' cleaned.Dockerfile
+              docker build --build-arg IMAGE=syslog_monitoring:${CIRCLE_TAG} --tag=cleaned_syslog_monitoring:${CIRCLE_TAG} -f cleaned.Dockerfile .
+              docker tag cleaned_syslog_monitoring:${CIRCLE_TAG} syslog_monitoring:${CIRCLE_TAG}
       - run:
           name: Export gateway_nfv_scheduler:${CIRCLE_TAG} image
           command: |
@@ -101,13 +115,13 @@ workflows:
       - build-amd-docker-image:
           filters:
             tags:
-              only: /^v.*/
+              only:  /^v.*/
             branches:
               ignore: /.*/
       - build-arm-docker-image:
           filters:
             tags:
-              only: /^v.*/
+              only:  /^v.*/
             branches:
               ignore: /.*/
       - release:
