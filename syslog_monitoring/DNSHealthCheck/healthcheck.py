@@ -20,6 +20,7 @@ import dns.flags
 import dns.name
 from .port import check_DNS_port_open
 from .common import get_config_data
+from .constants import DNS_QUERY_TIMEOUT
 
 
 def get_name_servers():
@@ -46,17 +47,17 @@ def health_check_dns_server(name_servers):
     result_health_check_dns_server = []
     for name_server in name_servers:
         if check_DNS_port_open(domain_name, name_server):
-            res = dns.query.udp(req, name_server)
-            if res:
-                result_health_check_dns_server.append({
-                    "name_server": name_server,
-                    "status": True
-                })
+            try:
+                res = dns.query.udp(req, name_server, DNS_QUERY_TIMEOUT)
+            except dns.exception.Timeout:
+                res = False
+            status = True if res else False
         else:
-            result_health_check_dns_server.append({
-                "name_server": name_server,
-                "status": False
-            })
+            status = False
+        result_health_check_dns_server.append({
+            "name_server": name_server,
+            "status": status
+        })
     return result_health_check_dns_server
 
 
