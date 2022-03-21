@@ -6,6 +6,7 @@ Requires=docker.service
 [Service]
 StandardOutput=null
 type=simple
+TimeoutStopSec=30
 Environment=IMAGE_NAME='syslog_monitoring:<TAG_RELEASE>'               \
             NAME='syslog-sv'
 ExecStartPre=-/usr/bin/docker stop   $NAME      2> /dev/null || true
