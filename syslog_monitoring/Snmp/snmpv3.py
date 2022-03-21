@@ -140,7 +140,7 @@ if __name__ == '__main__':
     message = ' '.join(string for string in sys.argv[4])
     err_type = sys.argv[5]
     host = sys.argv[6]
-    # Don't edit processes
+    # Don't edit the processes number
     pool = Pool(processes=1)
     sendTrapFunc = partial(send_trap, cond, level, keypair, message, err_type, host)
     basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
