@@ -24,8 +24,8 @@ class SendDNSPkt:
         self.serverIP = serverIP
         self.port=port
 
-    def sendPkt(self, packet):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    def sendPkt(self, packet, socket_module):
+        sock = socket.socket(socket_module, socket.SOCK_DGRAM)
         sock.settimeout(1)
         sock.sendto(bytes(packet), (self.serverIP, self.port))
         data, addr = sock.recvfrom(1024)
@@ -57,7 +57,7 @@ def check_DNS_port_open(domain, nameserver):
     for _ in range(5): # udp is unreliable.Packet loss may occur
         try:
             pkt = s._build_packet()
-            s.sendPkt(pkt)
+            data = s.sendPkt(pkt, socket.AF_INET) if '.' in nameserver else s.sendPkt(pkt, socket.AF_INET6)
             portOpen = True
             return portOpen
         except socket.timeout:
