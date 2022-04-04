@@ -1,3 +1,5 @@
+# Support remove "cpp" and "mirror" in container
+
 ARG IMAGE=syslog_monitoring:<tag>
 FROM $IMAGE
 RUN   ln -s / /rootlink && \
