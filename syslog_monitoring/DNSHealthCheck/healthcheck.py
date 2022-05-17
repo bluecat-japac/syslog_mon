@@ -1,11 +1,11 @@
 # Copyright 2019 BlueCat Networks (USA) Inc. and its affiliates
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ import dns.message
 import dns.query
 import dns.flags
 import dns.name
+import subprocess
 from .port import check_DNS_port_open
 from .common import get_config_data
 from .constants import DNS_QUERY_TIMEOUT
@@ -41,7 +42,8 @@ def get_name_servers():
             ip = re.search(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', line) if '.' in line else re.search(regex_ipv6, line)
             if ip:
                 name_servers.append(ip.group(0))
-
+            if 'sourceIP' in line:
+                name_servers.append('sourceIP')
     return name_servers
 
 
@@ -53,20 +55,37 @@ def health_check_dns_server(name_servers):
     req = dns.message.make_query(dns_domain, dns.rdatatype.ANY)
     req.flags != dns.flags.AD
     req.find_rrset(req.additional, dns.name.root, RDCLASS, dns.rdatatype.OPT, create=True, force_unique=True)
+    source_ip = get_source_ip(name_servers)
     result_health_check_dns_server = []
     for name_server in name_servers:
-        if check_DNS_port_open(domain_name, name_server):
-            try:
-                res = dns.query.udp(req, name_server, DNS_QUERY_TIMEOUT)
-            except dns.exception.Timeout:
-                res = False
-            status = True if res else False
-        else:
-            status = False
-        result_health_check_dns_server.append({
-            "name_server": name_server,
-            "status": status
-        })
+        status = False
+        if 'sourceIP' not in name_server:
+            if check_DNS_port_open(domain_name, name_server):
+                try:
+                    dns.query.udp(req, name_server, DNS_QUERY_TIMEOUT, source=source_ip)
+                    status = True
+                except dns.exception.Timeout:
+                    pass
+            result_health_check_dns_server.append({
+                "name_server": name_server,
+                "status": status
+            })
     return result_health_check_dns_server
 
 
+def get_source_ip(name_servers):
+    loopback_ipv6 = None
+    if 'sourceIP' in name_servers:
+        try:
+            loopback_data = subprocess.Popen('/bin/ip addr show lo | /bin/grep "inet6.*global"',
+                                             stdout=subprocess.PIPE,
+                                             stderr=subprocess.PIPE,
+                                             close_fds=True,
+                                             shell=True,
+                                             universal_newlines=True).stdout.readline()
+            loopback_v6_re = re.search('.*inet6(.*)scope.*', loopback_data)
+            loopback_ipv6 = loopback_v6_re.group(1).strip()
+        except Exception:
+            pass
+    loopback_ipv6 = loopback_ipv6.split('/')[0] if loopback_ipv6 else loopback_ipv6
+    return loopback_ipv6
