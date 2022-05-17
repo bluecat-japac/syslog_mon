@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV PYTHONPATH /etc/syslog-ng/syslog_monitoring
 
 RUN apt-get update && \
-    apt-get install -y gnupg2 syslog-ng-core syslog-ng python-pip snmp snmpd && \
+    apt-get install -y gnupg2 syslog-ng-core syslog-ng python-pip snmp snmpd iproute2 && \
     mv /etc/syslog-ng/syslog-ng.conf /etc/syslog-ng/syslog-ng-backup.conf
 
 COPY syslog-ng.conf /etc/syslog-ng/syslog-ng.conf
