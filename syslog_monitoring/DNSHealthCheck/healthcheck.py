@@ -55,13 +55,14 @@ def health_check_dns_server(name_servers):
     req = dns.message.make_query(dns_domain, dns.rdatatype.ANY)
     req.flags != dns.flags.AD
     req.find_rrset(req.additional, dns.name.root, RDCLASS, dns.rdatatype.OPT, create=True, force_unique=True)
-    source_ip = get_source_ip(name_servers)
+    source_ipv4, source_ipv6 = get_source_ip(name_servers)
     result_health_check_dns_server = []
     for name_server in name_servers:
         status = False
         if 'sourceIP' not in name_server:
             if check_DNS_port_open(domain_name, name_server):
                 try:
+                    source_ip = source_ipv6 if ':' in name_server else source_ipv4
                     dns.query.udp(req, name_server, DNS_QUERY_TIMEOUT, source=source_ip)
                     status = True
                 except dns.exception.Timeout:
@@ -74,18 +75,31 @@ def health_check_dns_server(name_servers):
 
 
 def get_source_ip(name_servers):
-    loopback_ipv6 = None
+    loopback_ipv6 = loopback_ipv4 = None
     if 'sourceIP' in name_servers:
         try:
-            loopback_data = subprocess.Popen('/bin/ip addr show lo | /bin/grep "inet6.*global"',
-                                             stdout=subprocess.PIPE,
-                                             stderr=subprocess.PIPE,
-                                             close_fds=True,
-                                             shell=True,
-                                             universal_newlines=True).stdout.readline()
-            loopback_v6_re = re.search('.*inet6(.*)scope.*', loopback_data)
+            loopback_v6_data = subprocess.Popen('/bin/ip addr show lo | /bin/grep "inet6.*global"',
+                                                stdout=subprocess.PIPE,
+                                                stderr=subprocess.PIPE,
+                                                close_fds=True,
+                                                shell=True,
+                                                universal_newlines=True).stdout.readline()
+            loopback_v6_re = re.search('.*inet6(.*)scope.*', loopback_v6_data)
             loopback_ipv6 = loopback_v6_re.group(1).strip()
         except Exception:
             pass
+
+        try:
+            loopback_v4_data = subprocess.Popen('/bin/ip addr show lo | /bin/grep "inet.*global"',
+                                                stdout=subprocess.PIPE,
+                                                stderr=subprocess.PIPE,
+                                                close_fds=True,
+                                                shell=True,
+                                                universal_newlines=True).stdout.readline()
+            loopback_v4_re = re.search('.*inet(.*)scope.*', loopback_v4_data)
+            loopback_ipv4 = loopback_v4_re.group(1).strip()
+        except Exception:
+            pass
     loopback_ipv6 = loopback_ipv6.split('/')[0] if loopback_ipv6 else loopback_ipv6
-    return loopback_ipv6
+    loopback_ipv4 = loopback_ipv4.split('/')[0] if loopback_ipv4 else loopback_ipv4
+    return loopback_ipv4, loopback_ipv6
