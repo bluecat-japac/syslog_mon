@@ -69,9 +69,11 @@ def query_dns():
     name_servers = get_name_servers()
     data = health_check_dns_server(name_servers)
     logger.info(data)
-    source_ip = get_source_ip(name_servers)
-    if source_ip:
-        logger.debug('Source IP: {}'.format(source_ip))
+    source_ipv4, source_ipv6 = get_source_ip(name_servers)
+    if source_ipv4:
+        logger.debug('Source IPv4: {}'.format(source_ipv4))
+    if source_ipv6:
+        logger.debug('Source IPv6: {}'.format(source_ipv6))
 
     try:
         for server in data:
