@@ -18,7 +18,6 @@ import dns.message
 import dns.query
 import dns.flags
 import dns.name
-import subprocess
 from .port import check_DNS_port_open
 from .common import get_config_data
 from .constants import DNS_QUERY_TIMEOUT
@@ -43,7 +42,7 @@ def get_name_servers():
             if ip:
                 name_servers.append(ip.group(0))
             if 'sourceIP' in line:
-                name_servers.append('sourceIP')
+                name_servers.append(line.strip())
     return name_servers
 
 
@@ -76,30 +75,9 @@ def health_check_dns_server(name_servers):
 
 def get_source_ip(name_servers):
     loopback_ipv6 = loopback_ipv4 = None
-    if 'sourceIP' in name_servers:
-        try:
-            loopback_v6_data = subprocess.Popen('/bin/ip addr show lo | /bin/grep "inet6.*global"',
-                                                stdout=subprocess.PIPE,
-                                                stderr=subprocess.PIPE,
-                                                close_fds=True,
-                                                shell=True,
-                                                universal_newlines=True).stdout.readline()
-            loopback_v6_re = re.search('.*inet6(.*)scope.*', loopback_v6_data)
-            loopback_ipv6 = loopback_v6_re.group(1).strip()
-        except Exception:
-            pass
-
-        try:
-            loopback_v4_data = subprocess.Popen('/bin/ip addr show lo | /bin/grep "inet.*global"',
-                                                stdout=subprocess.PIPE,
-                                                stderr=subprocess.PIPE,
-                                                close_fds=True,
-                                                shell=True,
-                                                universal_newlines=True).stdout.readline()
-            loopback_v4_re = re.search('.*inet(.*)scope.*', loopback_v4_data)
-            loopback_ipv4 = loopback_v4_re.group(1).strip()
-        except Exception:
-            pass
-    loopback_ipv6 = loopback_ipv6.split('/')[0] if loopback_ipv6 else loopback_ipv6
-    loopback_ipv4 = loopback_ipv4.split('/')[0] if loopback_ipv4 else loopback_ipv4
+    for name_server in name_servers:
+        if 'sourceIPv4' in name_server:
+            loopback_ipv4 = name_server.split('sourceIPv4-')[1]
+        elif 'sourceIPv6' in name_server:
+            loopback_ipv6 = name_server.split('sourceIPv6-')[1]
     return loopback_ipv4, loopback_ipv6
