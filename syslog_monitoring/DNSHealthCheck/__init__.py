@@ -18,7 +18,7 @@ from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from config import logger, LOG_PRIORITY
 from .common import get_config_data
-from .healthcheck import (get_name_servers, health_check_dns_server)
+from .healthcheck import (get_name_servers, health_check_dns_server, get_source_ip)
 
 
 executors = {
@@ -69,6 +69,12 @@ def query_dns():
     name_servers = get_name_servers()
     data = health_check_dns_server(name_servers)
     logger.info(data)
+    source_ipv4, source_ipv6 = get_source_ip(name_servers)
+    if source_ipv4:
+        logger.debug('Source IPv4: {}'.format(source_ipv4))
+    if source_ipv6:
+        logger.debug('Source IPv6: {}'.format(source_ipv6))
+
     try:
         for server in data:
             source = vm_host_name
