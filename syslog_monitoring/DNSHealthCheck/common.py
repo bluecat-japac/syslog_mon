@@ -14,6 +14,7 @@
 
 import os
 import configparser
+import socket
 
 
 def get_config_data():
@@ -26,3 +27,11 @@ def get_config_data():
     RDCLASS = config.getint("SCHEDULER_CONFIG", "RDCLASS")
     vm_host_name = config.get("SCHEDULER_CONFIG", "VM_HOST_NAME")
     return interval, domain_name, RDCLASS, vm_host_name
+
+
+def check_ipv6(ip):
+    try:
+        socket.inet_pton(socket.AF_INET6, ip)
+        return True
+    except socket.error:
+        return False

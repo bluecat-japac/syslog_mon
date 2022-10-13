@@ -19,8 +19,8 @@ import dns.query
 import dns.flags
 import dns.name
 from .port import check_DNS_port_open
-from .common import get_config_data
-from .constants import DNS_QUERY_TIMEOUT
+from .common import get_config_data, check_ipv6
+from .constants import DNS_QUERY_TIMEOUT, IPV4_PARTERN, IPV6_PARTERN
 
 
 def get_name_servers():
@@ -29,16 +29,7 @@ def get_name_servers():
     with open("{}/{}".format(basedir, "/Config/resolv.conf"), "r") as rconfig:
         lines = rconfig.readlines()
         for line in lines:
-            regex_ipv6 = '''(?:^|(?<=\s))(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|
-            ([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|
-            ([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|
-            ([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|
-            [0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|
-            fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|
-            1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|
-            ([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|
-            (2[0-4]|1{0,1}[0-9]){0,1}[0-9]))(?=\s|$)'''
-            ip = re.search(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', line) if '.' in line else re.search(regex_ipv6, line)
+            ip = re.search(IPV4_PARTERN, line) if '.' in line else re.search(IPV6_PARTERN, line)
             if ip:
                 name_servers.append(ip.group(0))
             if 'sourceIP' in line:
@@ -61,7 +52,7 @@ def health_check_dns_server(name_servers):
         if 'sourceIP' not in name_server:
             if check_DNS_port_open(domain_name, name_server):
                 try:
-                    source_ip = source_ipv6 if ':' in name_server else source_ipv4
+                    source_ip = source_ipv6 if check_ipv6(name_server) else source_ipv4
                     dns.query.udp(req, name_server, DNS_QUERY_TIMEOUT, source=source_ip)
                     status = True
                 except dns.exception.Timeout:
