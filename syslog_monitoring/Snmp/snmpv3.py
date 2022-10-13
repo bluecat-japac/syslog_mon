@@ -32,6 +32,9 @@ import json
 from Config.map_oid import (
     MAP_OID
 )
+from DNSHealthCheck.common import (
+    check_ipv6
+)
 basedir = os.path.dirname(__file__)
 sys.path.append(basedir)
 
@@ -121,6 +124,7 @@ def send_snmp_trap(cond, level, keypair, msg, err_type, host, destination):
     authProtocol = destination['authProtocol']
     privProtocol = destination['privProtocol']
     dest = destination["transportTarget"]
+    dest = '[{}]'.format(dest) if check_ipv6(dest) else dest
     obj = MAP_OID[err_type]["OID"]
     v1 = '{} s "{}"'.format(MAP_OID[err_type]["bcnSyslogMonAlarmCond"], cond)
     v2 = '{} i {}'.format(MAP_OID[err_type]["bcnSyslogMonAlarmSeverity"], level)

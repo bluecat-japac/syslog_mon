@@ -12,9 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from DNSHealthCheck.constants import (
+    IPV4_PARTERN,
+    IPV6_PARTERN
+)
 
-REG_TARGET_STRING_IP = r"(client|master|from).\d+\.\d+\.\d+\.\d+"
-REG_TARGET_IP = r"\d+\.\d+\.\d+\.\d+"
+REG_TARGET_STRING_IP = r"(client|master|from).({}|{})".format(IPV4_PARTERN, IPV6_PARTERN)
+REG_TARGET_IP = r"({}|{})".format(IPV4_PARTERN, IPV6_PARTERN)
 REG_ZONE_STRING = r"(zone|transfer of ').(\w+[\.-]?)+/IN/(\w+[\.-]?)+"
 REG_ZONE = r"(\w+[\.-]?)+/IN/(\w+[\.-]?)+"
 REG_INTERFACE_STRING_DOWN = r"Deleting interface .+ \w+\.*\w+,"
