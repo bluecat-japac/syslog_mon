@@ -29,10 +29,11 @@ def get_name_servers():
     with open("{}/{}".format(basedir, "/Config/resolv.conf"), "r") as rconfig:
         lines = rconfig.readlines()
         for line in lines:
-            ip = re.search(IPV4_PARTERN, line) if '.' in line else re.search(IPV6_PARTERN, line)
-            if ip:
-                name_servers.append(ip.group(0))
-            if 'sourceIP' in line:
+            if 'sourceip' not in line.lower():
+                ip = re.search(IPV4_PARTERN, line) if '.' in line else re.search(IPV6_PARTERN, line)
+                if ip:
+                    name_servers.append(ip.group(0))
+            else:
                 name_servers.append(line.strip())
     return name_servers
 
@@ -49,7 +50,7 @@ def health_check_dns_server(name_servers):
     result_health_check_dns_server = []
     for name_server in name_servers:
         status = False
-        if 'sourceIP' not in name_server:
+        if 'sourceip' not in name_server.lower():
             if check_DNS_port_open(domain_name, name_server):
                 try:
                     source_ip = source_ipv6 if check_ipv6(name_server) else source_ipv4
@@ -67,8 +68,8 @@ def health_check_dns_server(name_servers):
 def get_source_ip(name_servers):
     loopback_ipv6 = loopback_ipv4 = None
     for name_server in name_servers:
-        if 'sourceIPv4' in name_server:
-            loopback_ipv4 = name_server.split('sourceIPv4-')[1]
-        elif 'sourceIPv6' in name_server:
-            loopback_ipv6 = name_server.split('sourceIPv6-')[1]
+        if 'sourceipv4' in name_server.lower():
+            loopback_ipv4 = name_server.lower().split('sourceipv4-')[1]
+        elif 'sourceipv6' in name_server.lower():
+            loopback_ipv6 = name_server.lower().split('sourceipv6-')[1]
     return loopback_ipv4, loopback_ipv6
