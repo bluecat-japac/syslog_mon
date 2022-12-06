@@ -69,7 +69,7 @@ def get_source_ip(name_servers):
     loopback_ipv6 = loopback_ipv4 = None
     for name_server in name_servers:
         if 'sourceipv4' in name_server.lower():
-            loopback_ipv4 = name_server.lower().split('sourceipv4-')[1]
+            loopback_ipv4 = re.search(IPV4_PARTERN, name_server.lower()).group(0)
         elif 'sourceipv6' in name_server.lower():
-            loopback_ipv6 = name_server.lower().split('sourceipv6-')[1]
+            loopback_ipv6 = re.search(IPV6_PARTERN, name_server.lower()).group(0)
     return loopback_ipv4, loopback_ipv6

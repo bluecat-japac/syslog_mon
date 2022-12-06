@@ -29,10 +29,12 @@ class SendDNSPkt:
 
     def sendPkt(self, packet, socket_module):
         sock = socket.socket(socket_module, socket.SOCK_DGRAM)
-        sock.connect((self.source_ip, self.port)) if self.source_ip else sock.connect((self.server_ip, self.port))
+        if self.source_ip:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.bind((self.source_ip, self.port))
         sock.settimeout(1)
-        sock.sendall(bytes(packet))
-        data = sock.recv(1024)
+        sock.sendto(bytes(packet), (self.server_ip, self.port))
+        data, addr = sock.recvfrom(1024)
         sock.close()
         return data
 
@@ -48,7 +50,7 @@ class SendDNSPkt:
         for part in split_url:
             packet += struct.pack("B", len(part))
             for s in part:
-                packet += struct.pack('c',s.encode())
+                packet += struct.pack('c', s.encode())
         packet += struct.pack("B", 0)
         packet += struct.pack(">H", 1)
         packet += struct.pack(">H", 1)
