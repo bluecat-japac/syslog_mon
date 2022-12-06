@@ -30,7 +30,6 @@ class SendDNSPkt:
     def sendPkt(self, packet, socket_module):
         sock = socket.socket(socket_module, socket.SOCK_DGRAM)
         if self.source_ip:
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.bind((self.source_ip, self.port))
         sock.settimeout(1)
         sock.sendto(bytes(packet), (self.server_ip, self.port))
