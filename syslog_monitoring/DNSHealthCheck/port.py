@@ -19,15 +19,21 @@ import struct
 
 class SendDNSPkt:
 
-    def __init__(self,url,serverIP,port=53):
-        self.url=url
-        self.serverIP = serverIP
-        self.port=port
+    def __init__(self, url, server_ip, source_ip=None, port=53):
+        self.url = url
+        self.server_ip = server_ip
+        if source_ip is None:
+            source_ip = ''
+        self.source_ip = source_ip
+        self.port = port
 
     def sendPkt(self, packet, socket_module):
         sock = socket.socket(socket_module, socket.SOCK_DGRAM)
+        if self.source_ip:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.bind((self.source_ip, self.port))
         sock.settimeout(1)
-        sock.sendto(bytes(packet), (self.serverIP, self.port))
+        sock.sendto(bytes(packet), (self.server_ip, self.port))
         data, addr = sock.recvfrom(1024)
         sock.close()
         return data
@@ -44,15 +50,15 @@ class SendDNSPkt:
         for part in split_url:
             packet += struct.pack("B", len(part))
             for s in part:
-                packet += struct.pack('c',s.encode())
+                packet += struct.pack('c', s.encode())
         packet += struct.pack("B", 0)
         packet += struct.pack(">H", 1)
         packet += struct.pack(">H", 1)
         return packet
 
 
-def check_DNS_port_open(domain, nameserver):
-    s = SendDNSPkt(domain, nameserver)
+def check_DNS_port_open(domain, nameserver, sourceip):
+    s = SendDNSPkt(domain, nameserver, sourceip)
     portOpen = False
     for _ in range(5): # udp is unreliable.Packet loss may occur
         try:

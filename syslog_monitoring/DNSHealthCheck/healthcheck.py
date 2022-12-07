@@ -49,11 +49,11 @@ def health_check_dns_server(name_servers):
     source_ipv4, source_ipv6 = get_source_ip(name_servers)
     result_health_check_dns_server = []
     for name_server in name_servers:
+        source_ip = source_ipv6 if check_ipv6(name_server) else source_ipv4
         status = False
         if 'sourceip' not in name_server.lower():
-            if check_DNS_port_open(domain_name, name_server):
+            if check_DNS_port_open(domain_name, name_server, source_ip):
                 try:
-                    source_ip = source_ipv6 if check_ipv6(name_server) else source_ipv4
                     dns.query.udp(req, name_server, DNS_QUERY_TIMEOUT, source=source_ip)
                     status = True
                 except dns.exception.Timeout:
@@ -69,7 +69,11 @@ def get_source_ip(name_servers):
     loopback_ipv6 = loopback_ipv4 = None
     for name_server in name_servers:
         if 'sourceipv4' in name_server.lower():
-            loopback_ipv4 = name_server.lower().split('sourceipv4-')[1]
+            loopback_ipv4 = re.search(IPV4_PARTERN, name_server.lower())
+            if loopback_ipv4:
+                loopback_ipv4 = loopback_ipv4.group(0)
         elif 'sourceipv6' in name_server.lower():
-            loopback_ipv6 = name_server.lower().split('sourceipv6-')[1]
+            loopback_ipv6 = re.search(IPV6_PARTERN, name_server.lower())
+            if loopback_ipv6:
+                loopback_ipv6 = loopback_ipv6.group(0)
     return loopback_ipv4, loopback_ipv6
