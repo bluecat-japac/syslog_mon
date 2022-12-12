@@ -15,6 +15,7 @@
 import random
 import socket
 import struct
+from config import logger
 
 
 class SendDNSPkt:
@@ -29,14 +30,19 @@ class SendDNSPkt:
 
     def sendPkt(self, packet, socket_module):
         sock = socket.socket(socket_module, socket.SOCK_DGRAM)
-        if self.source_ip:
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            sock.bind((self.source_ip, self.port))
-        sock.settimeout(1)
-        sock.sendto(bytes(packet), (self.server_ip, self.port))
-        data, addr = sock.recvfrom(1024)
-        sock.close()
-        return data
+        sock.settimeout(3)
+        try:
+            if self.source_ip:
+                sock.bind((self.source_ip, 0)) # using an ephemeral port as the source port, by specifying 0 as the port number when binding the source IP
+            sock.sendto(bytes(packet), (self.server_ip, self.port))
+            data, addr = sock.recvfrom(1024)
+            return data
+        except socket.timeout:
+            logger.error("Port sendPkt: timed out")
+        except socket.error as ex:
+            logger.error("Port sendPkt: {}".format(ex))
+        finally:
+            sock.close()
 
     def _build_packet(self):
         randint = random.randint(0, 65535)
@@ -67,5 +73,5 @@ def check_DNS_port_open(domain, nameserver, sourceip):
             portOpen = True
             return portOpen
         except socket.timeout:
-            pass
+            logger.error("Port check_DNS_port_open: timed out")
     return portOpen
