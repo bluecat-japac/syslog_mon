@@ -12,11 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import json
 from config import *
 from Alarm import alarm_management, common
 
 basedir = os.path.dirname(os.path.abspath(__file__))
+alarm_state_dir = os.path.join(basedir, "alarm_state")
+is_exist = os.path.exists(alarm_state_dir)
+if not is_exist:
+    os.mkdir(alarm_state_dir)
 
 
 class Monitoring(object):
@@ -38,8 +43,8 @@ class Monitoring(object):
         logger.info("Monitoring:{0}".format("Open"))
         self._is_opened = True
 
-        state_file = os.path.join(basedir, "current_state")
-        forceclear_file = os.path.join(basedir, "forceclear")
+        state_file = os.path.join(alarm_state_dir, "current_state")
+        forceclear_file = os.path.join(alarm_state_dir, "forceclear")
         state_data = common.read_file(state_file)
         if state_data:
             state = json.loads(state_data)
@@ -60,7 +65,7 @@ class Monitoring(object):
     def close(self):
         """Close the connection to the target  service"""
         logger.info("Monitoring:{0}".format("Close"))
-        state_file = os.path.join(basedir, "current_state")
+        state_file = os.path.join(alarm_state_dir, "current_state")
         state = json.dumps(alarm_management.key_pair)
         with open(state_file, "w+") as f:
             logger.info("Create state file: {}".format(state_file))
@@ -92,7 +97,7 @@ class Monitoring(object):
         if cond is None or keypair is None or err_type is None:
             return True
         if cond == "forceclear":
-            forceclear = os.path.join(basedir, "forceclear")
+            forceclear = os.path.join(alarm_state_dir, "forceclear")
             data = "{0}|{1}|{2}|{3}|{4}|{5}".format(cond, msg["LEVEL"], keypair, msg["MESSAGE"], err_type, host)
             with open(forceclear, "w+") as forceclear_file:
                 logger.info("Create forceclear file: {}".format(forceclear))

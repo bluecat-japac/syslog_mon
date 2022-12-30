@@ -17,6 +17,7 @@ ExecStart=/usr/bin/docker run --rm                                 \
                               --log-driver=none                     \
                               -v  /var/log/syslog_monitoring/:/var/log/mon-app/  \
                               -v /opt/syslog_monitoring/Config/:/etc/syslog-ng/syslog_monitoring/Config/ \
+                              -v /opt/syslog_monitoring/alarm_state/:/etc/syslog-ng/syslog_monitoring/alarm_state/ \
                               -v /var/lib/snmp/:/var/lib/snmp/   \
                               $IMAGE_NAME
 [Install]
