@@ -45,6 +45,8 @@ NETWORKINTERFACEDOWN = "NetworkInterfaceDown"
 STORAGEREADONLY = "StorageReadOnly"
 ZONETRANSFERFAILED = "ZoneTransferFailed"
 TCPCONNECTIONLIMITEXCEEDED = "TcpConnectionLimitExceeded"
+TESTQUERYFAILED = "TestQueryFailed"
+NTPCLOCKSUNSYNCHRONIZED = "NtpClocksUnsynchronized"
 
 key_pair = {
     LOADCONFIGURATIONFAILED: {
@@ -60,6 +62,10 @@ key_pair = {
     ZONETRANSFERFAILED: {
     },
     TCPCONNECTIONLIMITEXCEEDED: {
+    },
+    TESTQUERYFAILED: {
+    },
+    NTPCLOCKSUNSYNCHRONIZED: {
     }
 }
 

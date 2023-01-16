@@ -35,21 +35,24 @@ scheduler = BackgroundScheduler()
 scheduler.configure(executors=executors, job_defaults=job_defaults)
 
 
-NtpClocksUnsynchronized = {}
 interval, threshold, bdds_servers = get_ntp_config_data()
 alm_hostname = get_alarm_host_name()
 
 
 def set_or_clear_alarm_ntp_clock_unsynchronized(case, source, target):
+    from .alarm_management import (
+        key_pair,
+        NTPCLOCKSUNSYNCHRONIZED
+    )
     key = "{0}_{1}".format(source, target)
     if case.lower() == "set":
-        if key in NtpClocksUnsynchronized.keys():
+        if key in key_pair[NTPCLOCKSUNSYNCHRONIZED].keys():
             return None, None
-        NtpClocksUnsynchronized.update({key: {}})
+        key_pair[NTPCLOCKSUNSYNCHRONIZED].update({key: {}})
         return "set", key
     elif case.lower() == "clear":
-        if key in NtpClocksUnsynchronized.keys():
-            del NtpClocksUnsynchronized[key]
+        if key in key_pair[NTPCLOCKSUNSYNCHRONIZED].keys():
+            del key_pair[NTPCLOCKSUNSYNCHRONIZED][key]
             return "clear", key
         return None, None
     return None, None

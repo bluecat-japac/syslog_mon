@@ -34,9 +34,6 @@ job_defaults = {
 scheduler = BackgroundScheduler()
 scheduler.configure(executors=executors, job_defaults=job_defaults)
 
-TestQueryFailed = {
-
-}
 
 class ExecutorManager(object):
 
@@ -101,15 +98,19 @@ def query_dns():
 
 
 def set_or_clear_alarm_test_query_failed(case, source, target):
+    from Alarm.alarm_management import (
+        key_pair,
+        TESTQUERYFAILED
+    )
     key = "{0}_{1}".format(source, target)
     if case.lower() == "set":
-        if key in TestQueryFailed.keys():
+        if key in key_pair[TESTQUERYFAILED].keys():
             return None, None
-        TestQueryFailed.update({key:{}})
+        key_pair[TESTQUERYFAILED].update({key:{}})
         return "set", key
     elif case.lower() == "clear":
-        if key in TestQueryFailed.keys():
-            del TestQueryFailed[key]
+        if key in key_pair[TESTQUERYFAILED].keys():
+            del key_pair[TESTQUERYFAILED][key]
             return "clear", key
         return None, None
     return None, None
