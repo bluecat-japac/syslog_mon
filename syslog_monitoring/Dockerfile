@@ -1,7 +1,7 @@
 FROM ubuntu:18.04
 
-ENV DEBIAN_FRONTEND noninteractive
-ENV PYTHONPATH /etc/syslog-ng/syslog_monitoring
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONPATH=/etc/syslog-ng/syslog_monitoring
 
 RUN apt-get update && \
     apt-get install -y gnupg2 syslog-ng-core syslog-ng python-pip snmp snmpd iproute2 && \
